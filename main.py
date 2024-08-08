@@ -21,7 +21,12 @@ students = Table(
     Column('nationality', String)
 ) 
 
-stmt = students.insert().values(id = 1, name = 'Yudai')
+entries = [
+    {'id' : 7, 'name' : 'Alice', 'last name' : 'Halison', 'nationality' : 'Canadian'},
+    {'id' : 10, 'name' : 'Jack', 'last name' : 'hann', 'nationality' : 'German'},
+    {'id' : 9, 'name' : 'James', 'last name' : 'Haltmann', 'nationality' : 'French'}
+]
+stmt = students.insert().values(entries)
 
 logger.debug(f"Insert statement: {stmt.compile().params}")
 
@@ -29,5 +34,7 @@ logger.debug(f"Insert statement: {stmt.compile().params}")
 # create a connection
 with engine.connect() as conn:
 
+    # s = students.select()
     result = conn.execute(stmt)
+
     conn.commit()
