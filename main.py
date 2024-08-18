@@ -1,5 +1,5 @@
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, text, select, ForeignKey, event
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, text, select, ForeignKey, event, values, update
 import logging
 from sqlalchemy.sql import alias
 
@@ -50,25 +50,37 @@ entries_address = [
 ]
 sql_text = text('SELECT * FROM students WHERE id == 7')
 
-ids_to_be_deleted = []
+
+def update_multiple(parent_table, child_table):
+    
+    stmt = parent_table.update().\
+    values({parent_table.c.name:'changed_name'}).\
+    where(parent_table.c.id == child_table.c.id)
+
+    return stmt
 
 
+def delete_multiple(parent_table, child_table, conn):
 
+    ids_to_be_deleted = []
 
-
-# create a connection
-with engine.connect() as conn:
-
-    for row in conn.execute(select(addresses.c.st_id)):
+    for row in conn.execute(select(child_table.c.st_id)):
 
         logger.debug(f'in a for loop: {row}')
-        if row not in conn.execute(select(students.c.id)).fetchall():
-            logger.debug(f"the ids from the original student table is: {conn.execute(select(students.c.id)).fetchall()}")
+        if row not in conn.execute(select(parent_table.c.id)).fetchall():
+            logger.debug(f"the ids from the original student table is: {conn.execute(select(parent_table.c.id)).fetchall()}")
             ids_to_be_deleted.append(row[0])
         logger.debug(f'the id list to be deleted is: {ids_to_be_deleted}')
     
 
-    stmt = addresses.delete().where(addresses.c.st_id.in_(ids_to_be_deleted))
+    stmt = child_table.delete().where(child_table.c.st_id.in_(ids_to_be_deleted))
+
+    return stmt
+
+# create a connection
+with engine.connect() as conn:
+    # stmt = delete_multiple(students, addresses, conn)
+    stmt = update_multiple(students, addresses)
     result = conn.execute(stmt)
 
     conn.commit()
