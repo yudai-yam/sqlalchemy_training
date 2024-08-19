@@ -1,5 +1,5 @@
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, text, select, ForeignKey, event, values, update
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, text, select, ForeignKey, event, values, update, join
 import logging
 from sqlalchemy.sql import alias
 
@@ -59,6 +59,14 @@ def update_multiple(parent_table, child_table):
 
     return stmt
 
+def join_tables(table_1, table_2):
+    j = join(table_2, table_1, isouter=True)
+
+    stmt = select(table_1).select_from(j)
+
+    return stmt
+
+
 
 def delete_multiple(parent_table, child_table, conn):
 
@@ -80,12 +88,15 @@ def delete_multiple(parent_table, child_table, conn):
 # create a connection
 with engine.connect() as conn:
     # stmt = delete_multiple(students, addresses, conn)
-    stmt = update_multiple(students, addresses)
+    # stmt = update_multiple(students, addresses)
+    stmt = join_tables(students, addresses)
     result = conn.execute(stmt)
 
     conn.commit()
 
+logger.debug(f'the result of the execution is {result}')
+
 # print(result)
 
-# for row in result:
-#     print(row)
+for row in result:
+    print(row)
